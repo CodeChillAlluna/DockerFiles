@@ -1,0 +1,8 @@
+FROM codechill/ubuntu-base
+
+RUN useradd code --create-home -p qlDeVgp7kEJFw \
+&& usermod -aG sudo code
+
+USER code
+
+WORKDIR /home/code
