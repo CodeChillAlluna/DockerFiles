@@ -5,6 +5,10 @@ services:
 
 language: generic
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+
 install:
   - cd CodeChill-IDE
   - IMAGE="codechillaluna/code-chill-ide"
