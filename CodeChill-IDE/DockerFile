@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:16.04
 
 #Common deps
 RUN apt-get update && apt-get -y install curl xz-utils
@@ -10,17 +10,17 @@ RUN apt-get update && apt-get -y install curl xz-utils
 RUN set -ex \
   && for key in \
   94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
-  FD3A5288F042B6850C66B31F09FE44734EB7990E \
-  71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
-  DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
-  C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
   B9AE9905FFD7803F25714661B63B535A4C206CA9 \
-  56730D5401028683275BD23C23EFEFE93C4CFFFE \
   77984A986EBC2AA786BC0F66B01FBB92821C587A \
+  71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
+  FD3A5288F042B6850C66B31F09FE44734EB7990E \
+  8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
+  C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
+  DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
   ; do \
-  gpg --keyserver pgp.mit.edu --recv-keys "$key" || \
-  gpg --keyserver keyserver.pgp.com --recv-keys "$key" || \
-  gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" ; \
+  # gpg --keyserver pgp.mit.edu --recv-keys "$key" || \
+  # gpg --keyserver keyserver.pgp.com --recv-keys "$key" || \
+  gpg --keyserver pool.sks-keyservers.net --recv-keys "$key" ; \
   done
 
 ENV NODE_VERSION 8.12.0
@@ -51,7 +51,8 @@ RUN set -ex \
   ; do \
   gpg --keyserver pgp.mit.edu --recv-keys "$key" || \
   gpg --keyserver keyserver.pgp.com --recv-keys "$key" || \
-  gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" ; \
+  gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" || \
+  gpg --keyserver pool.sks-keyservers.net --recv-keys "$key" ; \
   done \
   && curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
   && curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc" \
@@ -87,7 +88,7 @@ RUN go get -u -v github.com/nsf/gocode
 RUN go get -u -v github.com/rogpeppe/godef
 RUN go get -u -v golang.org/x/tools/cmd/godoc
 RUN go get -u -v github.com/zmb3/gogetdoc
-RUN go get -u -v github.com/golang/lint/golint
+RUN go get -u -v golang.org/x/lint/golint
 RUN go get -u -v github.com/fatih/gomodifytags
 RUN go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs
 RUN go get -u -v golang.org/x/tools/cmd/gorename
@@ -113,8 +114,9 @@ RUN apt-get update && apt-get install -y clang-tools-8
 RUN ln -s /usr/bin/clangd-8 /usr/bin/clangd
 
 #Python 2
-RUN apt-get update && apt-get install -y python python-pip && \
-pip install python-language-server;
+RUN apt-get install -y python python-pip python3 python3-pip && \
+pip install python-language-server && \
+pip3 install python-language-server
 
 #PHP
 RUN apt-get -y install php curl php-cli php-mbstring unzip
@@ -129,26 +131,23 @@ RUN curl -s -o composer-setup.php https://getcomposer.org/installer \
 RUN apt-get -y install ruby ruby-dev zlib1g-dev
 RUN gem install solargraph
 
+RUN apt-get update && apt-get install -y python build-essential
+
 RUN useradd code --create-home -p qlDeVgp7kEJFw \
 && usermod -aG sudo code
+
+RUN mkdir -p /home/code/Workspace && \
+  chown -R code:code /home/code/Workspace
 
 USER code
 
 WORKDIR /home/code
 
-RUN mkdir /theia
-  chmod g+rw /theia && \
-  mkdir -p /home/code/Workspace && \
-  chown -R code:code /home/code/Workspace && \
-  chown -R code:code /theia
-
-RUN apt-get update && apt-get install -y python build-essential
-
-ADD package.json /theia/package.json
-RUN cd /theia
+ADD package.json ./package.json
 RUN yarn --cache-folder ./ycache && rm -rf ./ycache
 RUN yarn theia build
+ADD settings.json ./.theia/settings.json
 EXPOSE 3000
 ENV SHELL /bin/bash
 
-CMD [ "yarn", "theia", "start", "/home/code/Workspace", "--hostname=0.0.0.0" ]
+CMD [ "yarn", "theia", "start", "/home/code/Workspace/", "--hostname=0.0.0.0" ]
