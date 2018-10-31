@@ -8,7 +8,7 @@ language: generic
 install:
   - cd CodeChill-IDE
   - IMAGE="codechillaluna/code-chill-ide"
-  - docker build -f DockerFile -t $IMAGE . --no-cache
+  - travis_wait docker build -f DockerFile -t $IMAGE . --no-cache
 
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
